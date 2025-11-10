@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Performance ICE - CRM</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                <div>
+                    <h1>⬥ Executive Performance ICE</h1>
+                    <p class="subtitle">Sistema de Gestión de Clientes</p>
+                </div>
+                <div style="text-align: center; display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 200px;">
+                    <p style="color: var(--text-primary); margin: 0; font-size: 0.95rem;">
+                        👤 <span id="userName">Cargando...</span>
+                        <span class="notification-bell" id="notificationBell">
+                            🔔
+                            <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+                        </span>
+                    </p>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;">
+                        <button id="btnAdminPanel" class="btn btn-warning" style="padding: 8px 14px; display: none; font-size: 0.9rem;" onclick="window.location.href='admin.html'">
+                            👨‍💼 Panel Admin
+                        </button>
+                        <button id="btnLogout" class="btn btn-secondary" style="padding: 8px 14px; font-size: 0.9rem;">
+                            🚪 Cerrar Sesión
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <!-- Pestañas de navegación -->
+            <div class="tabs-container">
+                <button class="tab-btn active" onclick="switchTab('clientes')">
+                    👥 Mis Clientes
+                </button>
+                <button class="tab-btn" onclick="switchTab('dashboard')">
+                    📊 Dashboard
+                </button>
+                <button class="tab-btn" onclick="switchTab('metas')">
+                    🎯 Metas
+                </button>
+                <button class="tab-btn" onclick="switchTab('pipeline')">
+                    📈 Pipeline
+                </button>
+                <button class="tab-btn" onclick="switchTab('contactos')">
+                    📞 Contactos
+                </button>
+                <button class="tab-btn" onclick="switchTab('campanas')">
+                    📧 Campañas
+                </button>
+                <button class="tab-btn" onclick="switchTab('actividades')">
+                    ⚡ Actividades
+                </button>
+                <button class="tab-btn" onclick="switchTab('calendario')">
+                    📅 Recordatorios
+                </button>
+            </div>
+
+            <!-- Pestaña: Clientes -->
+            <div id="tab-clientes" class="tab-content active">
+            <!-- Barra de búsqueda -->
+            <section class="search-section">
+                <h2>🔍 Buscar Cliente</h2>
+                <div class="search-container">
+                    <input type="text" id="searchInput" placeholder="Buscar por nombre, cédula o número de servicio..." class="search-input">
+                    <button id="btnSearch" class="btn btn-primary">Buscar</button>
+                    <button id="btnClearSearch" class="btn btn-secondary">Limpiar</button>
+                </div>
+            </section>
+
+            <!-- Sección de controles -->
+            <section class="controls">
+                <h2>Mis Clientes</h2>
+                <div class="button-group">
+                    <button id="btnAddClient" class="btn btn-success">➕ Agregar Cliente</button>
+                    <button id="btnLoadClients" class="btn btn-primary">🔄 Actualizar Lista</button>
+                    <select id="filterSegment" class="filter-select">
+                        <option value="">Todos los segmentos</option>
+                        <option value="PLATINO">PLATINO</option>
+                        <option value="ORO">ORO</option>
+                        <option value="PLATA">PLATA</option>
+                        <option value="BRONCE">BRONCE</option>
+                    </select>
+                </div>
+                <div class="stats-bar">
+                    <span>Total: <strong id="totalClients">0</strong></span>
+                    <span>Platino: <strong id="totalPlatino">0</strong></span>
+                    <span>Oro: <strong id="totalOro">0</strong></span>
+                    <span>Plata: <strong id="totalPlata">0</strong></span>
+                </div>
+            </section>
+
+            <!-- Formulario para crear/editar cliente -->
+            <section id="formSection" class="form-section hidden">
+                <h2 id="formTitle">Agregar Nuevo Cliente</h2>
+                <form id="clientForm">
+                    <!-- Identificación -->
+                    <h3>📋 Información Personal</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cedula">Cédula: *</label>
+                            <input type="text" id="cedula" required placeholder="112380702">
+                        </div>
+                        <div class="form-group">
+                            <label for="nombre">Nombre Completo: *</label>
+                            <input type="text" id="nombre" required placeholder="ESQUIVEL AGUILAR IVANNIA LUCIA">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="email">Correo Electrónico:</label>
+                            <input type="email" id="email" placeholder="cliente@email.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="fechaNacimiento">Fecha de Nacimiento:</label>
+                            <input type="date" id="fechaNacimiento">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="domicilio">Domicilio:</label>
+                        <input type="text" id="domicilio" placeholder="Dirección completa">
+                    </div>
+                    
+                    <!-- Servicios -->
+                    <h3>📱 Servicios</h3>
+                    <div class="form-group">
+                        <label for="serviciosMoviles">Servicios Móviles Activos:</label>
+                        <input type="text" id="serviciosMoviles" placeholder="83033341, 88396969 (separados por coma)">
+                        <small>Ingrese los números separados por coma</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="serviciosFijos">Servicios Fijos Activos:</label>
+                        <input type="text" id="serviciosFijos" placeholder="22801234, 22805678 (separados por coma)">
+                        <small>Ingrese los números separados por coma</small>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="tipoPlan">Tipo de Plan Suscrito:</label>
+                            <input type="text" id="tipoPlan" placeholder="Ej: Plan Pospago 5GB">
+                        </div>
+                        <div class="form-group">
+                            <label for="estadoPlan">Estado del Plan:</label>
+                            <select id="estadoPlan">
+                                <option value="ACTUALIZADO">Actualizado</option>
+                                <option value="NO ACTUALIZADO">No Actualizado</option>
+                                <option value="PENDIENTE">Pendiente</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Clasificación -->
+                    <h3>⭐ Clasificación</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="segmento">Segmento: *</label>
+                            <select id="segmento" required>
+                                <option value="">Seleccione...</option>
+                                <option value="PLATINO">PLATINO</option>
+                                <option value="ORO">ORO</option>
+                                <option value="PLATA">PLATA</option>
+                                <option value="BRONCE">BRONCE</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="puntajeScore">Puntaje Score:</label>
+                            <input type="number" id="puntajeScore" placeholder="492" min="0" max="999">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="categoriaCrediticia">Categoría Crediticia:</label>
+                            <select id="categoriaCrediticia">
+                                <option value="">Seleccione...</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                                <option value="D">D</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="notas">Notas Importantes:</label>
+                            <textarea id="notas" rows="2" placeholder="Información adicional relevante"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button type="submit" class="btn btn-success">💾 Guardar Cliente</button>
+                        <button type="button" id="btnCancelForm" class="btn btn-secondary">❌ Cancelar</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Sección de mensajes -->
+            <div id="messageBox" class="message-box hidden"></div>
+
+            <!-- Sección de clientes -->
+            <section class="data-section">
+                <h2>Clientes Registrados</h2>
+                <div id="clientsContainer" class="clients-grid">
+                    <p class="empty-message">No hay clientes registrados. Haz clic en "Agregar Cliente" para comenzar.</p>
+                </div>
+                
+                <!-- Controles de paginación -->
+                <div id="paginationControls" class="pagination-controls hidden">
+                    <div class="pagination-info">
+                        <span>Mostrando <strong id="showingStart">0</strong> - <strong id="showingEnd">0</strong> de <strong id="totalResults">0</strong> resultados</span>
+                        <select id="itemsPerPage" class="filter-select">
+                            <option value="5" selected>5 por página</option>
+                            <option value="10">10 por página</option>
+                            <option value="20">20 por página</option>
+                            <option value="50">50 por página</option>
+                        </select>
+                    </div>
+                    <div class="pagination-buttons">
+                        <button id="btnPrevPage" class="btn btn-secondary">← Anterior</button>
+                        <div id="pageNumbers" class="page-numbers"></div>
+                        <button id="btnNextPage" class="btn btn-secondary">Siguiente →</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Modal detalle del cliente -->
+            <div id="clientDetailModal" class="modal hidden">
+                <div class="modal-content">
+                    <span class="modal-close" id="closeModal">&times;</span>
+                    <h2 id="modalClientName">Cliente</h2>
+                    <div id="clientDetailContent"></div>
+                    
+                    <!-- Sección para agregar interacción -->
+                    <div class="interaction-section">
+                        <h3>📞 Registrar Interacción</h3>
+                        <form id="interactionForm">
+                            <div class="form-group">
+                                <label for="interactionType">Tipo:</label>
+                                <select id="interactionType" required>
+                                    <option value="RENOVACION">Renovación</option>
+                                    <option value="OFERTA">Oferta de Producto</option>
+                                    <option value="CONSULTA">Consulta</option>
+                                    <option value="RECLAMO">Reclamo</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="interactionNotes">Notas:</label>
+                                <textarea id="interactionNotes" required rows="3" placeholder="Detalles de la interacción"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="interactionResult">Resultado:</label>
+                                <select id="interactionResult" required>
+                                    <option value="EXITOSO">Exitoso</option>
+                                    <option value="PENDIENTE">Pendiente</option>
+                                    <option value="RECHAZADO">Rechazado</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-success">💾 Guardar Interacción</button>
+                        </form>
+                    </div>
+                    
+                    <!-- Botones de acción -->
+                    <div class="modal-actions">
+                        <button id="btnEditClient" class="btn btn-primary">✏️ Editar Cliente</button>
+                        <button id="btnDeleteClient" class="btn btn-danger">🗑️ Eliminar Cliente</button>
+                    </div>
+                </div>
+            </div>
+            </div><!-- Fin tab-clientes -->
+
+            <!-- Pestaña: Dashboard -->
+            <div id="tab-dashboard" class="tab-content">
+                <section class="data-section">
+                    <h2>📊 Dashboard de Métricas</h2>
+                    
+                    <!-- Métricas principales -->
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-icon">👥</div>
+                            <div class="metric-content">
+                                <p class="metric-label">Total Clientes</p>
+                                <p class="metric-value" id="metricTotal">0</p>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon">⭐</div>
+                            <div class="metric-content">
+                                <p class="metric-label">Platino</p>
+                                <p class="metric-value" id="metricPlatino">0</p>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon">🥇</div>
+                            <div class="metric-content">
+                                <p class="metric-label">Oro</p>
+                                <p class="metric-value" id="metricOro">0</p>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon">🥈</div>
+                            <div class="metric-content">
+                                <p class="metric-label">Plata</p>
+                                <p class="metric-value" id="metricPlata">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Gráficos -->
+                    <div class="charts-container">
+                        <div class="chart-card">
+                            <h3>Distribución por Segmento</h3>
+                            <canvas id="segmentChart" width="400" height="200"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Score Promedio por Segmento</h3>
+                            <canvas id="scoreChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </section>
+            </div><!-- Fin tab-dashboard -->
+
+            <!-- Pestaña: Calendario de Recordatorios -->
+            <div id="tab-calendario" class="tab-content">
+                <section class="data-section">
+                    <h2>📅 Recordatorios y Notas</h2>
+                    
+                    <!-- Formulario de recordatorios -->
+                    <div class="reminder-form-container">
+                        <h3>➕ Nuevo Recordatorio</h3>
+                        <form id="reminderForm" class="reminder-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="reminderDate">Fecha:</label>
+                                    <input type="date" id="reminderDate" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="reminderTime">Hora:</label>
+                                    <input type="time" id="reminderTime">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="reminderTitle">Título:</label>
+                                <input type="text" id="reminderTitle" placeholder="Ej: Seguimiento a Cliente" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="reminderDescription">Descripción:</label>
+                                <textarea id="reminderDescription" rows="3" placeholder="Detalles del recordatorio"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="reminderClient">Cliente (opcional):</label>
+                                <input type="text" id="reminderClient" placeholder="Nombre del cliente">
+                            </div>
+                            <button type="submit" class="btn btn-success">💾 Guardar Recordatorio</button>
+                        </form>
+                    </div>
+                    
+                    <!-- Lista de recordatorios -->
+                    <div class="reminders-list-container">
+                        <h3>📝 Mis Recordatorios</h3>
+                        <div id="remindersList" class="reminders-list">
+                            <p class="empty-message">No hay recordatorios. ¡Crea uno nuevo!</p>
+                        </div>
+                    </div>
+                </section>
+            </div><!-- Fin tab-calendario -->
+
+            <!-- Pestaña: Metas -->
+            <div id="tab-metas" class="tab-content">
+                <section class="main-section">
+                    <div class="metas-header">
+                        <h2>🎯 Mis Metas</h2>
+                        <div class="metas-controls">
+                            <button class="btn btn-small btn-primary" onclick="loadSalesMetas()" title="Actualizar metas desde ventas">
+                                🔄 Actualizar
+                            </button>
+                            <button class="btn btn-small btn-secondary" onclick="loadSalesReport()" title="Ver historial de ventas">
+                                📊 Ver Reporte
+                            </button>
+                        </div>
+                    </div>
+                    <p class="metas-description">
+                        💡 <strong>Nota:</strong> Las metas se calculan basadas en las VENTAS de este mes, no en la cantidad de clientes.
+                    </p>
+                    <div id="metasContainer" class="metas-grid">
+                        <!-- Cargará dinámicamente -->
+                    </div>
+                    <div id="salesReportContainer" style="display: none; margin-top: 2rem;">
+                        <!-- Reportede ventas -->
+                    </div>
+                </section>
+            </div>
+
+            <!-- Pestaña: Pipeline de Ventas -->
+            <div id="tab-pipeline" class="tab-content">
+                <section class="main-section">
+                    <h2>📈 Pipeline de Ventas</h2>
+                    <div id="pipelineContainer" class="pipeline-container">
+                        <!-- Cargará dinámicamente -->
+                    </div>
+                </section>
+            </div>
+
+            <!-- Pestaña: Reporte de Contactos -->
+            <div id="tab-contactos" class="tab-content">
+                <section class="main-section">
+                    <h2>📞 Reporte de Contactos</h2>
+                    <div class="contacts-filters">
+                        <select id="filterContactType" class="filter-select" onchange="applyContactFilters()">
+                            <option value="">Todos los tipos</option>
+                            <option value="Llamada">Llamada</option>
+                            <option value="Email">Email</option>
+                            <option value="WhatsApp">WhatsApp</option>
+                            <option value="Visita">Visita</option>
+                        </select>
+                        <input type="date" id="filterContactDate" class="filter-input" onchange="applyContactFilters()">
+                        <button class="btn btn-primary" onclick="loadContactReports()">🔄 Actualizar</button>
+                    </div>
+                    <div id="contactsReportContainer" class="contacts-table">
+                        <!-- Cargará dinámicamente -->
+                    </div>
+                </section>
+            </div>
+
+            <!-- Pestaña: Campañas -->
+            <div id="tab-campanas" class="tab-content">
+                <section class="main-section">
+                    <h2>📧 Campañas</h2>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                        <div>
+                            <h3>Crear Nueva Campaña</h3>
+                            <form id="campaignForm">
+                                <div class="form-group">
+                                    <label>Asunto:</label>
+                                    <input type="text" id="campaignSubject" required placeholder="Titulo de la campaña">
+                                </div>
+                                <div class="form-group">
+                                    <label>Mensaje:</label>
+                                    <textarea id="campaignMessage" required placeholder="Contenido del mensaje" rows="4"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>Segmento:</label>
+                                    <select id="campaignSegment" required>
+                                        <option value="">Selecciona segmento</option>
+                                        <option value="PLATINO">PLATINO</option>
+                                        <option value="ORO">ORO</option>
+                                        <option value="PLATA">PLATA</option>
+                                        <option value="BRONCE">BRONCE</option>
+                                        <option value="TODOS">TODOS</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-success">📤 Enviar Campaña</button>
+                            </form>
+                        </div>
+                        <div>
+                            <h3>Historial de Campañas</h3>
+                            <div id="campaignsHistory" class="campaigns-history">
+                                <!-- Cargará dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Pestaña: Actividades -->
+            <div id="tab-actividades" class="tab-content">
+                <section class="main-section">
+                    <h2>⚡ Últimas Actividades</h2>
+                    <div class="activities-filters">
+                        <select id="filterActivityType" class="filter-select" onchange="applyActivityFilters()">
+                            <option value="">Todas las actividades</option>
+                            <option value="created">Creado</option>
+                            <option value="edited">Editado</option>
+                            <option value="contacted">Contactado</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="loadActivities()">🔄 Actualizar</button>
+                    </div>
+                    <div id="activitiesContainer" class="activities-list">
+                        <!-- Cargará dinámicamente -->
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <footer>
+            <p>Executive Performance ICE © 2025 - Sistema de Gestión de Clientes</p>
+        </footer>
+    </div>
+
+    <!-- Footer con Créditos -->
+    <footer class="app-footer">
+        <div class="footer-content">
+            <div class="footer-left">
+                <span class="powered-by">🚀 Powered by <strong>Infinix Dev</strong></span>
+            </div>
+            <div class="footer-right">
+                <span><strong>Rubén Madrigal</strong> • Arquitecto</span>
+                <span class="footer-divider">•</span>
+                <span><a href="#" onclick="showCredits(); return false;">Créditos</a></span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal de Créditos -->
+    <div id="creditsModal" class="modal hidden">
+        <div class="modal-content credits-modal">
+            <button class="modal-close" onclick="closeCredits()">&times;</button>
+            
+            <div class="credits-header">
+                <h2>🏗️ Acerca de Este Proyecto</h2>
+            </div>
+
+            <div class="credits-body">
+                <section class="credit-section">
+                    <h3>👨‍💼 Creador & Arquitecto</h3>
+                    <p><strong>Rubén Madrigal</strong></p>
+                    <p class="subtitle">Arquitecto de Soluciones Tecnológicas</p>
+                </section>
+
+                <section class="credit-section">
+                    <h3>🏢 Empresa</h3>
+                    <p><strong>Infinix Dev</strong></p>
+                    <p class="subtitle">Solutions that transform</p>
+                    <p><a href="https://infinixdev.com" target="_blank">www.infinixdev.com</a></p>
+                </section>
+
+                <section class="credit-section">
+                    <h3>📋 Información del Proyecto</h3>
+                    <p><strong>Nombre:</strong> Executive Performance CRM</p>
+                    <p><strong>Versión:</strong> 1.0</p>
+                    <p><strong>Cliente:</strong> ICE (Instituto Costarricense de Electricidad)</p>
+                </section>
+
+                <section class="credit-section">
+                    <h3>🔐 Licencia</h3>
+                    <div class="license-box">
+                        <p><strong>Número de Licencia:</strong></p>
+                        <p class="license-number">LIC-INFINIX-2024-EP-001</p>
+                        <p style="margin-top: 12px; font-size: 0.9rem; color: #666;">
+                            © 2024 Infinix Dev. Todos los derechos reservados.
+                        </p>
+                    </div>
+                </section>
+
+                <section class="credit-section">
+                    <h3>💻 Stack Tecnológico</h3>
+                    <div class="tech-grid">
+                        <div class="tech-item">
+                            <span class="tech-badge">Node.js</span>
+                            <span class="tech-badge">Express</span>
+                        </div>
+                        <div class="tech-item">
+                            <span class="tech-badge">Firebase</span>
+                            <span class="tech-badge">Firestore</span>
+                        </div>
+                        <div class="tech-item">
+                            <span class="tech-badge">HTML5</span>
+                            <span class="tech-badge">CSS3</span>
+                            <span class="tech-badge">JavaScript</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="credit-section">
+                    <h3>✨ Características</h3>
+                    <ul class="features-list">
+                        <li>8 tabs funcionales con todas las features</li>
+                        <li>Sistema de gestión de clientes completo (CRUD)</li>
+                        <li>Dashboard con métricas y gráficos en tiempo real</li>
+                        <li>Sistema de metas basado en ventas</li>
+                        <li>Pipeline de ventas con 5 estados</li>
+                        <li>Reportes de contactos con filtros avanzados</li>
+                        <li>Campañas masivas por segmento</li>
+                        <li>Control de acceso basado en roles</li>
+                        <li>Exportación a Excel</li>
+                        <li>Sistema de recordatorios inteligentes</li>
+                    </ul>
+                </section>
+
+                <section class="credit-section">
+                    <h3>📅 Información Adicional</h3>
+                    <p><strong>Fecha de Creación:</strong> Noviembre 2024</p>
+                    <p><strong>Estado:</strong> Producción Ready ✅</p>
+                    <p><strong>Tipo de Proyecto:</strong> CRM Empresarial</p>
+                </section>
+            </div>
+
+            <div class="credits-footer-modal">
+                <p>Executive Performance © 2024 | Creado por Infinix Dev</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/firebase-config.js"></script>
+    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/sales-tracking.js"></script>
+    <script type="module" src="js/clients.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script type="module" src="js/executive-features.js"></script>
+    <script type="module" src="js/advanced-features.js"></script>
+
+    <script>
+        // Funciones de créditos
+        function showCredits() {
+            document.getElementById('creditsModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeCredits() {
+            document.getElementById('creditsModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Cerrar modal al hacer clic fuera
+        document.getElementById('creditsModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeCredits();
+            }
+        });
+    </script>
+</body>
+</html>

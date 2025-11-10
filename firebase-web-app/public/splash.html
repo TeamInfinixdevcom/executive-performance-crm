@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Performance - Splash</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* SPLASH INFINIX (Primeros 3 segundos) */
+        .splash-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            animation: fadeOutSplash 3s ease-in-out forwards;
+        }
+
+        @keyframes fadeOutSplash {
+            0% {
+                opacity: 1;
+                visibility: visible;
+            }
+            80% {
+                opacity: 1;
+                visibility: visible;
+            }
+            100% {
+                opacity: 0;
+                visibility: hidden;
+            }
+        }
+
+        .splash-content {
+            text-align: center;
+            animation: zoomInSplash 0.8s ease-out;
+        }
+
+        @keyframes zoomInSplash {
+            0% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .splash-logo {
+            width: 200px;
+            height: auto;
+            margin-bottom: 40px;
+            filter: drop-shadow(0 10px 30px rgba(0, 122, 255, 0.3));
+        }
+
+        .splash-logo svg {
+            width: 100%;
+            height: auto;
+        }
+
+        .splash-text {
+            color: white;
+            margin-top: 30px;
+        }
+
+        .splash-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #00A8FF 0%, #0088FF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .splash-subtitle {
+            font-size: 14px;
+            color: #888;
+            font-style: italic;
+        }
+
+        .splash-divider {
+            width: 80px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00A8FF, transparent);
+            margin: 20px auto;
+        }
+
+        .splash-credit {
+            margin-top: 40px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* CREDITOS - Siempre visible */
+        .credits-footer {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(15, 52, 96, 0.95);
+            border: 1px solid rgba(0, 122, 255, 0.2);
+            border-radius: 12px;
+            padding: 16px 20px;
+            max-width: 300px;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            font-size: 11px;
+            line-height: 1.6;
+            color: #ccc;
+            animation: slideInCredits 0.5s ease-out 3.5s backwards;
+        }
+
+        @keyframes slideInCredits {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .credits-footer strong {
+            color: #00A8FF;
+            display: block;
+            margin-top: 8px;
+            font-weight: 600;
+        }
+
+        .credits-footer a {
+            color: #00A8FF;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .credits-footer a:hover {
+            color: #0088FF;
+            text-decoration: underline;
+        }
+
+        .license-number {
+            display: inline-block;
+            background: rgba(0, 122, 255, 0.1);
+            border: 1px solid rgba(0, 122, 255, 0.2);
+            border-radius: 4px;
+            padding: 2px 6px;
+            margin-top: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            color: #00A8FF;
+        }
+
+        .infinix-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(0, 122, 255, 0.1);
+        }
+
+        .badge-icon {
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(135deg, #00A8FF 0%, #0088FF 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 10px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .credits-footer {
+                bottom: 10px;
+                right: 10px;
+                max-width: 280px;
+                padding: 12px 16px;
+                font-size: 10px;
+            }
+
+            .splash-logo {
+                width: 150px;
+            }
+
+            .splash-title {
+                font-size: 20px;
+            }
+
+            .splash-subtitle {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- SPLASH SCREEN INFINIX (3 segundos) -->
+    <div class="splash-container">
+        <div class="splash-content">
+            <!-- Logo SVG de Infinix -->
+            <div class="splash-logo">
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Dragon Head (Black) -->
+                    <g id="dragon">
+                        <!-- Main head shape -->
+                        <path d="M 100 40 Q 130 45 140 70 Q 145 85 135 95 Q 125 105 100 105 Q 75 105 65 95 Q 55 85 60 70 Q 70 45 100 40 Z" 
+                              fill="#1a1a1a" stroke="#000" stroke-width="2"/>
+                        
+                        <!-- Eyes -->
+                        <circle cx="85" cy="65" r="6" fill="#00A8FF" opacity="0.9"/>
+                        <circle cx="115" cy="65" r="6" fill="#00A8FF" opacity="0.9"/>
+                        <circle cx="85" cy="65" r="2" fill="#0088FF"/>
+                        <circle cx="115" cy="65" r="2" fill="#0088FF"/>
+                        
+                        <!-- Horns -->
+                        <path d="M 75 50 Q 65 30 60 15" stroke="#000" stroke-width="3" fill="none" stroke-linecap="round"/>
+                        <path d="M 125 50 Q 135 30 140 15" stroke="#000" stroke-width="3" fill="none" stroke-linecap="round"/>
+                        
+                        <!-- Spikes on head -->
+                        <path d="M 85 40 L 80 25" stroke="#000" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M 100 38 L 100 20" stroke="#000" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M 115 40 L 120 25" stroke="#000" stroke-width="2" stroke-linecap="round"/>
+                        
+                        <!-- Mouth -->
+                        <path d="M 85 90 Q 100 98 115 90" stroke="#00A8FF" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7"/>
+                        
+                        <!-- Neck/Jaw definition -->
+                        <path d="M 70 90 Q 100 110 130 90" stroke="#000" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.5"/>
+                    </g>
+
+                    <!-- Glow effect -->
+                    <g opacity="0.3" filter="url(#glow)">
+                        <circle cx="100" cy="70" r="80" fill="url(#gradient)" />
+                    </g>
+
+                    <defs>
+                        <filter id="glow">
+                            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                            <feMerge>
+                                <feMergeNode in="coloredBlur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                        </filter>
+                        <radialGradient id="gradient" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" style="stop-color:#00A8FF;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#0088FF;stop-opacity:0" />
+                        </radialGradient>
+                    </defs>
+                </svg>
+            </div>
+
+            <div class="splash-divider"></div>
+
+            <div class="splash-text">
+                <div class="splash-title">Infinix Dev</div>
+                <div class="splash-subtitle">Solutions that transform</div>
+            </div>
+
+            <div class="splash-credit">
+                Powered by cutting-edge technology
+            </div>
+        </div>
+    </div>
+
+    <!-- CREDITOS (Aparece después del splash) -->
+    <div class="credits-footer">
+        <strong>🏗️ Creador & Arquitecto</strong>
+        <div>Rubén Madrigal</div>
+        <div style="color: #00A8FF; font-weight: 500;">Arquitecto de Soluciones Tecnológicas</div>
+        
+        <strong>🏢 Empresa</strong>
+        <div><a href="https://infinixdev.com" target="_blank">Infinix Dev</a></div>
+        
+        <strong>📋 Licencia</strong>
+        <div class="license-number">LIC-INFINIX-2024-EP-001</div>
+        
+        <strong>🔐 Versión</strong>
+        <div>Executive Performance v1.0</div>
+        
+        <div class="infinix-badge">
+            <div class="badge-icon">∞</div>
+            <span>Infinix Dev Solutions</span>
+        </div>
+    </div>
+
+    <script>
+        // Verificar si ya vimos el splash hoy
+        const splashShown = localStorage.getItem('splashShown');
+        const today = new Date().toDateString();
+        
+        if (splashShown === today) {
+            // Ya vimos el splash hoy, ir directo a la app sin esperar
+            window.location.href = '/index.html';
+        } else {
+            // Primera vez hoy, mostrar splash y redirigir después
+            setTimeout(() => {
+                localStorage.setItem('splashShown', today);
+                window.location.href = '/index.html';
+            }, 3500); // 3.5 segundos (3 del splash + 0.5 de transición)
+        }
+    </script>
+</body>
+</html>
