@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Performance CRM - Infinix Dev</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div id="login-container" class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <h1><i class="fas fa-chart-line"></i> Executive Performance CRM</h1>
+                <p>By Infinix Dev</p>
+            </div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" required placeholder="usuario@ejemplo.com">
+                </div>
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                </button>
+            </form>
+            <div class="login-footer">
+                <p>¿No tienes cuenta? <a href="#" id="register-link">Registrarse</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-container" class="app-container" style="display: none;">
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-chart-line"></i> CRM</h2>
+                <p class="user-name" id="user-name">Usuario</p>
+                <p class="user-role" id="user-role">Rol</p>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item active" data-tab="dashboard">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </li>
+                <li class="nav-item" data-tab="clients">
+                    <i class="fas fa-users"></i> Clientes
+                </li>
+                <li class="nav-item" data-tab="sales">
+                    <i class="fas fa-shopping-cart"></i> Ventas
+                </li>
+                <li class="nav-item" data-tab="activities">
+                    <i class="fas fa-tasks"></i> Actividades
+                </li>
+                <li class="nav-item" data-tab="reports">
+                    <i class="fas fa-chart-bar"></i> Reportes
+                </li>
+                <li class="nav-item" data-tab="team">
+                    <i class="fas fa-user-friends"></i> Equipo
+                </li>
+                <li class="nav-item" data-tab="settings">
+                    <i class="fas fa-cog"></i> Configuración
+                </li>
+                <li class="nav-item" data-tab="profile">
+                    <i class="fas fa-user"></i> Perfil
+                </li>
+            </ul>
+            <div class="sidebar-footer">
+                <button id="logout-btn" class="btn-logout">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </button>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Buscar..." id="search-input">
+                </div>
+                <div class="top-bar-actions">
+                    <button class="icon-btn" id="notifications-btn">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge" id="notification-count">0</span>
+                    </button>
+                    <button class="icon-btn mobile-menu-btn" id="mobile-menu-btn">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Dashboard Tab -->
+            <div id="dashboard-tab" class="tab-content active">
+                <div class="page-header">
+                    <h1>Dashboard</h1>
+                    <p>Resumen en tiempo real de tu negocio</p>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon blue">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="total-clients">0</h3>
+                            <p>Clientes Totales</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="total-sales">$0</h3>
+                            <p>Ventas del Mes</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon orange">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="active-deals">0</h3>
+                            <p>Negocios Activos</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon purple">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="pending-tasks">0</h3>
+                            <p>Tareas Pendientes</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-grid">
+                    <div class="chart-card">
+                        <h3>Ventas Mensuales</h3>
+                        <canvas id="sales-chart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Actividad Reciente</h3>
+                        <div id="activity-feed" class="activity-feed"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clients Tab -->
+            <div id="clients-tab" class="tab-content">
+                <div class="page-header">
+                    <h1>Clientes</h1>
+                    <button class="btn-primary" id="add-client-btn">
+                        <i class="fas fa-plus"></i> Agregar Cliente
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Email</th>
+                                <th>Teléfono</th>
+                                <th>Empresa</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clients-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sales Tab -->
+            <div id="sales-tab" class="tab-content">
+                <div class="page-header">
+                    <h1>Ventas</h1>
+                    <button class="btn-primary" id="add-sale-btn">
+                        <i class="fas fa-plus"></i> Registrar Venta
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Cliente</th>
+                                <th>Monto</th>
+                                <th>Fecha</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sales-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Activities Tab -->
+            <div id="activities-tab" class="tab-content">
+                <div class="page-header">
+                    <h1>Actividades</h1>
+                    <button class="btn-primary" id="add-activity-btn">
+                        <i class="fas fa-plus"></i> Nueva Actividad
+                    </button>
+                </div>
+                <div id="activities-list" class="activities-list"></div>
+            </div>
+
+            <!-- Reports Tab -->
+            <div id="reports-tab" class="tab-content">
+                <div class="page-header">
+                    <h1>Reportes</h1>
+                    <button class="btn-primary" id="generate-report-btn">
+                        <i class="fas fa-file-download"></i> Generar Reporte
+                    </button>
+                </div>
+                <div class="report-filters">
+                    <select id="report-type" class="form-control">
+                        <option value="sales">Ventas</option>
+                        <option value="clients">Clientes</option>
+                        <option value="performance">Rendimiento</option>
+                    </select>
+                    <input type="date" id="report-start-date" class="form-control">
+                    <input type="date" id="report-end-date" class="form-control">
+                </div>
+                <div class="chart-card">
+                    <canvas id="report-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Team Tab -->
+            <div id="team-tab" class="tab-content">
+                <div class="page-header">
+                    <h1>Equipo</h1>
+                    <button class="btn-primary" id="add-team-member-btn">
+                        <i class="fas fa-plus"></i> Agregar Miembro
+                    </button>
+                </div>
+                <div class="team-grid" id="team-grid"></div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="settings-tab" class="tab-content">
+                <div class="page-header">
+                    <h1>Configuración</h1>
+                </div>
+                <div class="settings-container">
+                    <div class="settings-section">
+                        <h3>General</h3>
+                        <div class="form-group">
+                            <label>Nombre de la Empresa</label>
+                            <input type="text" id="company-name" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Moneda</label>
+                            <select id="currency" class="form-control">
+                                <option value="USD">USD</option>
+                                <option value="EUR">EUR</option>
+                                <option value="MXN">MXN</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h3>Notificaciones</h3>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="email-notifications">
+                                Notificaciones por Email
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="push-notifications">
+                                Notificaciones Push
+                            </label>
+                        </div>
+                    </div>
+                    <button class="btn-primary" id="save-settings-btn">
+                        <i class="fas fa-save"></i> Guardar Configuración
+                    </button>
+                </div>
+            </div>
+
+            <!-- Profile Tab -->
+            <div id="profile-tab" class="tab-content">
+                <div class="page-header">
+                    <h1>Perfil</h1>
+                </div>
+                <div class="profile-container">
+                    <div class="profile-avatar">
+                        <img src="https://via.placeholder.com/150" alt="Avatar" id="profile-avatar">
+                        <button class="btn-secondary" id="change-avatar-btn">Cambiar Foto</button>
+                    </div>
+                    <div class="profile-form">
+                        <div class="form-group">
+                            <label>Nombre Completo</label>
+                            <input type="text" id="profile-name" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="profile-email" class="form-control" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Teléfono</label>
+                            <input type="tel" id="profile-phone" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Rol</label>
+                            <input type="text" id="profile-role" class="form-control" disabled>
+                        </div>
+                        <button class="btn-primary" id="update-profile-btn">
+                            <i class="fas fa-save"></i> Actualizar Perfil
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- App Scripts -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/clients.js"></script>
+    <script src="js/sales.js"></script>
+    <script src="js/activities.js"></script>
+    <script src="js/reports.js"></script>
+    <script src="js/team.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/profile.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
