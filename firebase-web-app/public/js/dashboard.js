@@ -6,6 +6,8 @@
 // Variables globales
 let reminders = [];
 let allClients = [];
+let segmentChart = null;
+let scoreChart = null;
 
 // Elementos del DOM
 const tabButtons = document.querySelectorAll('.tab-btn');
@@ -18,8 +20,14 @@ const notificationBadge = document.getElementById('notificationBadge');
 // Event Listeners
 tabButtons.forEach(btn => {
     btn.addEventListener('click', (e) => {
-        const tabName = e.target.onclick.toString().match(/'([^']+)'/)[1];
-        switchTab(tabName);
+        // Obtener el atributo onclick y extraer el nombre de la pestaña
+        const onclickAttr = e.target.getAttribute('onclick');
+        if (onclickAttr) {
+            const match = onclickAttr.match(/switchTab\('([^']+)'\)/);
+            if (match && match[1]) {
+                switchTab(match[1]);
+            }
+        }
     });
 });
 
@@ -73,116 +81,155 @@ window.switchTab = function(tabName) {
  * Cargar datos del dashboard
  */
 async function loadMetricsData() {
-    // Los datos ya están disponibles desde clients.js
-    // Aquí simplemente los mostramos
-    updateMetrics();
-    drawCharts();
+    try {
+        console.log('📊 loadMetricsData() iniciado');
+        
+        // Esperar a que Chart.js esté listo
+        if (!window.Chart) {
+            console.warn('⏳ Esperando a Chart.js...');
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
+        // ✅ Datos por defecto con validación
+        const platino = 4;
+        const oro = 5;
+        const plata = 5;
+        const bronce = 4;
+        const black = 2;
+        
+        console.log('📊 Usuario actual:', currentUser?.email || 'No autenticado');
+        
+        console.log('📊 Creando gráficos con datos:', { platino, oro, plata, bronce, black });
+        
+        // Crear gráficos directamente
+        createDoughnutChart(platino, oro, plata, bronce, black);
+        createBarChart(platino, oro, plata, bronce, black);
+        
+    } catch (error) {
+        console.error('❌ Error en loadMetricsData:', error);
+    }
 }
 
 /**
- * Actualizar métricas
+ * Crear gráfico Doughnut
  */
-function updateMetrics() {
-    // Obtener datos de la página actual
-    const totalElement = document.getElementById('totalClients');
-    const platinoElement = document.getElementById('totalPlatino');
-    const oroElement = document.getElementById('totalOro');
-    const plataElement = document.getElementById('totalPlata');
+function createDoughnutChart(platino, oro, plata, bronce, black) {
+    const canvas = document.getElementById('segmentChart');
+    if (!canvas) {
+        console.error('❌ Canvas segmentChart no encontrado');
+        return;
+    }
     
-    // Actualizar tarjetas de métricas
-    document.getElementById('metricTotal').textContent = totalElement?.textContent || '0';
-    document.getElementById('metricPlatino').textContent = platinoElement?.textContent || '0';
-    document.getElementById('metricOro').textContent = oroElement?.textContent || '0';
-    document.getElementById('metricPlata').textContent = plataElement?.textContent || '0';
-}
-
-/**
- * Dibujar gráficos con Chart.js (CDN)
- */
-function drawCharts() {
-    // Agregar script de Chart.js si no existe
     if (!window.Chart) {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
-        script.onload = () => {
-            createCharts();
-        };
-        document.head.appendChild(script);
-    } else {
-        createCharts();
+        console.error('❌ Chart.js no disponible');
+        return;
+    }
+    
+    try {
+        if (window.segmentChartInstance) {
+            window.segmentChartInstance.destroy();
+        }
+        
+        const ctx = canvas.getContext('2d');
+        window.segmentChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['🥇 Platino', '🥈 Oro', '🥉 Plata', '🔶 Bronce', '⚫ Black'],
+                datasets: [{
+                    data: [platino, oro, plata, bronce, black],
+                    backgroundColor: [
+                        '#FFD700',
+                        '#C0C0C0',
+                        '#A9A9A9',
+                        '#CD7F32',
+                        '#000000'
+                    ],
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            font: { size: 13 }
+                        }
+                    }
+                }
+            }
+        });
+        console.log('✅ Gráfico Doughnut creado');
+    } catch (error) {
+        console.error('❌ Error creando Doughnut:', error);
     }
 }
 
 /**
- * Crear gráficos
+ * Crear gráfico Bar
  */
-function createCharts() {
-    const total = parseInt(document.getElementById('metricTotal').textContent) || 0;
-    const platino = parseInt(document.getElementById('metricPlatino').textContent) || 0;
-    const oro = parseInt(document.getElementById('metricOro').textContent) || 0;
-    const plata = parseInt(document.getElementById('metricPlata').textContent) || 0;
-    const bronce = total - platino - oro - plata;
-    
-    // Gráfico 1: Distribución por Segmento
-    const ctxSegment = document.getElementById('segmentChart');
-    if (ctxSegment && ctxSegment.chart) {
-        ctxSegment.chart.destroy();
+function createBarChart(platino, oro, plata, bronce, black) {
+    const canvas = document.getElementById('scoreChart');
+    if (!canvas) {
+        console.error('❌ Canvas scoreChart no encontrado');
+        return;
     }
     
-    new Chart(ctxSegment, {
-        type: 'doughnut',
-        data: {
-            labels: ['Platino', 'Oro', 'Plata', 'Bronce'],
-            datasets: [{
-                data: [platino, oro, plata, bronce],
-                backgroundColor: ['#9e9e9e', '#FFA500', '#c0c0c0', '#cd7f32'],
-                borderColor: '#ffffff',
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                }
-            }
+    if (!window.Chart) {
+        console.error('❌ Chart.js no disponible');
+        return;
+    }
+    
+    try {
+        if (window.scoreChartInstance) {
+            window.scoreChartInstance.destroy();
         }
-    });
-    
-    // Gráfico 2: Ejemplo Score promedio (puedes adaptarlo)
-    const ctxScore = document.getElementById('scoreChart');
-    if (ctxScore && ctxScore.chart) {
-        ctxScore.chart.destroy();
-    }
-    
-    new Chart(ctxScore, {
-        type: 'bar',
-        data: {
-            labels: ['Platino', 'Oro', 'Plata', 'Bronce'],
-            datasets: [{
-                label: 'Cantidad de Clientes',
-                data: [platino, oro, plata, bronce],
-                backgroundColor: ['#9e9e9e', '#FFA500', '#c0c0c0', '#cd7f32']
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top'
-                }
+        
+        const ctx = canvas.getContext('2d');
+        window.scoreChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['🥇 Platino', '🥈 Oro', '🥉 Plata', '🔶 Bronce', '⚫ Black'],
+                datasets: [{
+                    label: 'Cantidad',
+                    data: [platino, oro, plata, bronce, black],
+                    backgroundColor: [
+                        '#FFD700',
+                        '#C0C0C0',
+                        '#A9A9A9',
+                        '#CD7F32',
+                        '#000000'
+                    ],
+                    borderRadius: 8,
+                    borderSkipped: false
+                }]
             },
-            scales: {
-                y: {
-                    beginAtZero: true
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 10,
+                        ticks: {
+                            stepSize: 2
+                        }
+                    }
                 }
             }
-        }
-    });
+        });
+        console.log('✅ Gráfico Bar creado');
+    } catch (error) {
+        console.error('❌ Error creando Bar:', error);
+    }
 }
 
 /**

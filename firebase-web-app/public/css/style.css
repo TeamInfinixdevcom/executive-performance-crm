@@ -616,6 +616,12 @@ footer p {
     color: #5C3D2E;
 }
 
+.segment-badge.black {
+    background: #1a1a1a;
+    color: #ffffff;
+    font-weight: bold;
+}
+
 /* Colores de borde por segmento */
 .client-card.segment-platino {
     border-left: 4px solid #9e9e9e;
@@ -631,6 +637,10 @@ footer p {
 
 .client-card.segment-bronce {
     border-left: 4px solid #cd7f32;
+}
+
+.client-card.segment-black {
+    border-left: 4px solid #000000;
 }
 
 /* Formulario en filas */
@@ -1381,17 +1391,32 @@ footer p {
 
 .tabs-container {
     display: flex;
-    gap: 8px;
+    gap: 0;
     margin-bottom: 24px;
-    border-bottom: 1px solid var(--separator);
+    border-bottom: 2px solid var(--separator);
     background: var(--card-bg);
-    padding: 0 0 0 0;
-    border-radius: 12px 12px 0 0;
+    padding: 0;
+    border-radius: 0;
     overflow-x: auto;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+
+.tabs-container::-webkit-scrollbar {
+    height: 3px;
+}
+
+.tabs-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.tabs-container::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 3px;
 }
 
 .tab-btn {
-    padding: 14px 24px;
+    padding: 16px 20px;
     background: transparent;
     border: none;
     color: var(--text-secondary);
@@ -1402,16 +1427,21 @@ footer p {
     white-space: nowrap;
     font-size: 0.95rem;
     font-family: inherit;
+    position: relative;
+    letter-spacing: -0.3px;
 }
 
 .tab-btn:hover {
     color: var(--text-primary);
-    background: #F9F9F9;
+    background: rgba(0, 122, 255, 0.05);
+    border-bottom-color: rgba(0, 122, 255, 0.3);
 }
 
 .tab-btn.active {
     color: var(--primary);
     border-bottom-color: var(--primary);
+    background: rgba(0, 122, 255, 0.02);
+    font-weight: 600;
 }
 
 .tab-content {
@@ -1435,18 +1465,38 @@ footer p {
 .metric-card {
     background: var(--card-bg);
     border: 1px solid var(--separator);
-    border-radius: 12px;
-    padding: 20px;
+    border-radius: 14px;
+    padding: 22px 20px;
     display: flex;
     align-items: center;
-    gap: 16px;
-    transition: all 0.3s var(--timing-smooth);
-    box-shadow: 0 1px 3px var(--overlay);
+    gap: 18px;
+    transition: all 0.3s var(--timing-bounce);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s;
+    pointer-events: none;
 }
 
 .metric-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px var(--overlay);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    border-color: var(--primary);
+}
+
+.metric-card:hover::before {
+    left: 100%;
 }
 
 .metric-icon {
@@ -1483,21 +1533,126 @@ footer p {
 .chart-card {
     background: var(--card-bg);
     border: 1px solid var(--separator);
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 1px 3px var(--overlay);
+    border-radius: 14px;
+    padding: 20px 18px 26px 18px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    transition: all 0.3s var(--timing-smooth);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+
+.chart-card:hover::after {
+    opacity: 1;
+}
+
+.chart-card:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    transform: translateY(-3px);
+    border-color: var(--primary);
 }
 
 .chart-card h3 {
     color: var(--text-primary);
-    font-size: 1.05rem;
+    font-size: 1.1rem;
     margin-bottom: 16px;
     font-weight: 600;
 }
 
 .chart-card canvas {
     max-width: 100%;
-    height: auto;
+    width: 100%;
+    height: 350px;
+    display: block;
+}
+
+/* Expandible Chart Styles */
+.expandable {
+    transition: all 0.4s var(--timing-bounce);
+}
+
+.chart-card.expanded {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 90vw;
+    max-width: 900px;
+    height: 80vh;
+    max-height: 800px;
+    background: var(--card-bg);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    transform: translate(-50%, -50%) scale(1);
+    z-index: 1002;
+    padding: 30px;
+    cursor: default;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    border: 1px solid var(--separator);
+}
+
+.chart-card.expanded h3 {
+    position: absolute;
+    top: 20px;
+    left: 30px;
+}
+
+.chart-card.expanded canvas {
+    width: 100% !important;
+    height: auto !important;
+    max-width: 100%;
+    max-height: calc(80vh - 100px);
+}
+
+.chart-card .close-expand {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 2.2rem;
+    color: var(--accent);
+    background: rgba(255,59,48,0.1);
+    border: none;
+    cursor: pointer;
+    z-index: 1003;
+    display: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s var(--timing-quick);
+    padding: 0;
+    line-height: 1;
+}
+
+.chart-card .close-expand:hover {
+    background: rgba(255,59,48,0.2);
+    transform: scale(1.1);
+}
+
+.chart-card.expanded .close-expand {
+    display: flex;
+}
+
+/* Overlay para expansión */
+.chart-expand-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.4);
+    z-index: 1001;
+    animation: fadeInOverlay 0.3s var(--timing-quick);
+    cursor: pointer;
+}
+
+@keyframes fadeInOverlay {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 /* ======================== RECORDATORIOS ======================== */

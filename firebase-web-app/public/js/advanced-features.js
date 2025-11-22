@@ -90,7 +90,7 @@ function setupVIPFunctionality() {
                 vipCard.innerHTML = `
                     <div class="vip-badge">⭐ VIP</div>
                     <div class="vip-card-content">
-                        <h3>${client.nombre}</h3>
+                        <h3>${client.name}</h3>
                         <p>Segmento: <strong>${client.segmento}</strong></p>
                         <p>Cédula: <strong>${client.cedula}</strong></p>
                         <p>Plan: <strong>${client.tipoPlan || 'N/A'}</strong></p>
@@ -316,9 +316,10 @@ async function exportToExcel() {
             const data = [];
             snapshot.forEach(doc => {
                 const client = doc.data();
+                const displayName = client.name || client.nombre || '(Sin nombre)';
                 data.push({
                     'Cédula': client.cedula,
-                    'Nombre': client.nombre,
+                    'Nombre': displayName,
                     'Email': client.email,
                     'Teléfono': client.telefonoContacto || 'N/A',
                     'Segmento': client.segmento,

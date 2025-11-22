@@ -8,6 +8,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { getFunctions } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
 
 // Configuración de Firebase (obtenida con: firebase apps:sdkconfig web)
 const firebaseConfig = {
@@ -24,6 +25,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const functions = getFunctions(app, 'us-central1');
 
 // Exportar para usar en otros archivos
-export { app, auth, db };
+export { app, auth, db, functions };

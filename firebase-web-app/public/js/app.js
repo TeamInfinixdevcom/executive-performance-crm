@@ -35,14 +35,18 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 async function checkApiHealth() {
     try {
-        const response = await fetch(`${API_URL}/health`);
+        const response = await fetch(`${API_URL}/health`, { signal: AbortSignal.timeout(2000) });
+        if (!response.ok) {
+            console.warn('⚠️ API no disponible, usando modo local');
+            return;
+        }
         const data = await response.json();
         if (data.status === 'OK') {
             showMessage('✅ Conexión con la API establecida', 'success');
         }
     } catch (error) {
-        showMessage('❌ Error al conectar con la API', 'error');
-        console.error('Error:', error);
+        console.warn('⚠️ API no disponible, operando en modo local', error.message);
+        // No mostrar error, la app funciona con Firebase
     }
 }
 

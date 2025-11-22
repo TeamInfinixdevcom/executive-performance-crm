@@ -3,7 +3,7 @@
  * Executive Performance - CRM
  */
 
-import { auth, db } from './firebase-config.js';
+import { auth, db, functions } from './firebase-config.js';
 import { 
     collection, 
     addDoc, 
@@ -18,6 +18,7 @@ import {
     Timestamp
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
 
 // Variables globales
 let currentUser = null;
@@ -43,6 +44,9 @@ const clientsContainer = document.getElementById('clientsContainer');
 const messageBox = document.getElementById('messageBox');
 const searchInput = document.getElementById('searchInput');
 const filterSegment = document.getElementById('filterSegment');
+const filterEstadoPlan = document.getElementById('filterEstadoPlan');
+const btnExportClients = document.getElementById('btnExportClients');
+const btnDeleteAllMyClients = document.getElementById('btnDeleteAllMyClients');
 
 // Elementos de paginación
 const paginationControls = document.getElementById('paginationControls');
@@ -67,6 +71,56 @@ onAuthStateChanged(auth, (user) => {
 });
 
 // Event Listeners
+if (btnDeleteAllMyClients) {
+    btnDeleteAllMyClients.addEventListener('click', async () => {
+        if (!currentUser) {
+            alert('No se ha autenticado ningún usuario.');
+            return;
+        }
+        if (!confirm('¿Seguro que quieres borrar TODOS tus clientes? Esta acción no se puede deshacer.')) return;
+        try {
+            // Buscar todos los clientes del usuario actual en la colección correcta
+            const q = query(collection(db, 'clients'), where('executiveId', '==', currentUser.uid));
+            const snapshot = await getDocs(q);
+            let deleted = 0;
+            for (const docSnap of snapshot.docs) {
+                await deleteDoc(docSnap.ref);
+                deleted++;
+            }
+            alert(`Se han borrado ${deleted} clientes asociados a tu usuario.`);
+            loadClients();
+        } catch (err) {
+            console.error('Error borrando clientes:', err);
+            alert('Ocurrió un error al borrar los clientes.');
+        }
+    });
+}
+if (btnExportClients) {
+    btnExportClients.addEventListener('click', () => {
+        if (!window.XLSX) {
+            alert('No se pudo cargar la librería de exportación.');
+            return;
+        }
+        // Preparar datos para exportar
+        const exportData = filteredClients.map(client => ({
+            'ID': client.id,
+            'Nombre': client.name,
+            'Cédula': client.cedula,
+            'Email': client.email || '',
+            'Segmento': client.segmento,
+            'Score': client.score,
+            'Categoría': client.categoria,
+            'Estado': client.estado,
+            'Móviles': Array.isArray(client.serviciosMoviles) ? client.serviciosMoviles.join(', ') : client.serviciosMoviles,
+            'Fijos': Array.isArray(client.serviciosFijos) ? client.serviciosFijos.join(', ') : client.serviciosFijos,
+            'Última actualización': client.updatedAt ? (window.safeFormatDate ? window.safeFormatDate(client.updatedAt) : formatDate(client.updatedAt)) : ''
+        }));
+        const ws = window.XLSX.utils.json_to_sheet(exportData);
+        const wb = window.XLSX.utils.book_new();
+        window.XLSX.utils.book_append_sheet(wb, ws, 'Clientes');
+        window.XLSX.writeFile(wb, 'clientes.xlsx');
+    });
+}
 btnAddClient.addEventListener('click', showForm);
 btnLoadClients.addEventListener('click', loadClients);
 btnCancelForm.addEventListener('click', hideForm);
@@ -183,26 +237,29 @@ function showPage(pageNum) {
     const end = start + itemsPerPage;
     const pageClients = filteredClients.slice(start, end);
     
-    // Renderizar clientes
-    const clientsHTML = pageClients.map(client => `
-        <div class="client-card segment-${client.segmento.toLowerCase()}" data-id="${client.id}">
+    // Renderizar clientes con validación segura
+    const clientsHTML = pageClients.map(client => {
+        // Usar validación segura para todos los campos
+        const safeClient = window.safeClientDisplay ? window.safeClientDisplay(client) : client;
+        return `
+        <div class="client-card segment-${safeClient.segmento.toLowerCase()}" data-id="${safeClient.id}" data-client-id="${safeClient.id}">
             <div class="client-card-header">
-                <h3>${client.nombre}</h3>
-                <span class="segment-badge ${client.segmento.toLowerCase()}">${client.segmento}</span>
+                <h3>${safeClient.name}</h3>
+                <span class="segment-badge ${safeClient.segmento.toLowerCase()}">${safeClient.segmento}</span>
             </div>
             <div class="client-card-body">
-                <p><strong>📄 Cédula:</strong> ${client.cedula}</p>
-                <p><strong>📱 Móviles:</strong> ${formatArray(client.serviciosMoviles)}</p>
-                <p><strong>📞 Fijos:</strong> ${formatArray(client.serviciosFijos)}</p>
-                <p><strong>⭐ Score:</strong> ${client.puntajeScore || 'N/A'} | <strong>Categoría:</strong> ${client.categoriaCrediticia || 'N/A'}</p>
-                <p><strong>📋 Estado:</strong> ${client.estadoPlan}</p>
+                <p><strong>📄 Cédula:</strong> ${safeClient.cedula}</p>
+                <p><strong>📱 Móviles:</strong> ${window.safeFormatArray ? window.safeFormatArray(client.serviciosMoviles) : formatArray(client.serviciosMoviles)}</p>
+                <p><strong>📞 Fijos:</strong> ${window.safeFormatArray ? window.safeFormatArray(client.serviciosFijos) : formatArray(client.serviciosFijos)}</p>
+                <p><strong>⭐ Score:</strong> ${safeClient.score} | <strong>Categoría:</strong> ${safeClient.categoria}</p>
+                <p><strong>📋 Estado:</strong> ${safeClient.estado}</p>
             </div>
             <div class="client-card-footer">
-                <button onclick="viewClientDetail('${client.id}')" class="btn btn-small btn-primary">👁️ Ver Detalle</button>
-                <small>Última actualización: ${formatDate(client.updatedAt)}</small>
+                <button onclick="viewClientDetail('${safeClient.id}')" class="btn btn-small btn-primary">👁️ Ver Detalle</button>
+                <small>Última actualización: ${window.safeFormatDate ? window.safeFormatDate(client.updatedAt) : formatDate(client.updatedAt)}</small>
             </div>
-        </div>
-    `).join('');
+        </div>`
+    }).join('');
     
     clientsContainer.innerHTML = clientsHTML || '<p class="empty-message">No hay clientes en esta página.</p>';
     
@@ -317,10 +374,17 @@ function changeItemsPerPage() {
  * Actualizar estadísticas
  */
 function updateStats(clients) {
-    document.getElementById('totalClients').textContent = clients.length;
-    document.getElementById('totalPlatino').textContent = clients.filter(c => c.segmento === 'PLATINO').length;
-    document.getElementById('totalOro').textContent = clients.filter(c => c.segmento === 'ORO').length;
-    document.getElementById('totalPlata').textContent = clients.filter(c => c.segmento === 'PLATA').length;
+    const updateElement = (id, value) => {
+        const elem = document.getElementById(id);
+        if (elem) elem.textContent = value;
+    };
+    
+    updateElement('totalClients', clients.length);
+    updateElement('totalPlatino', clients.filter(c => c.segmento === 'PLATINO').length);
+    updateElement('totalOro', clients.filter(c => c.segmento === 'ORO').length);
+    updateElement('totalPlata', clients.filter(c => c.segmento === 'PLATA').length);
+    updateElement('totalBronce', clients.filter(c => c.segmento === 'BRONCE').length);
+    updateElement('totalBlack', clients.filter(c => c.segmento === 'BLACK').length);
 }
 
 /**
@@ -333,7 +397,7 @@ async function handleClientSubmit(e) {
     
     const clientData = {
         cedula: document.getElementById('cedula').value.trim(),
-        nombre: document.getElementById('nombre').value.trim().toUpperCase(),
+        name: document.getElementById('nombre').value.trim().toUpperCase(),
         email: document.getElementById('email').value.trim(),
         fechaNacimiento: document.getElementById('fechaNacimiento').value,
         domicilio: document.getElementById('domicilio').value.trim(),
@@ -410,7 +474,7 @@ window.viewClientDetail = async function(clientId) {
  * Mostrar detalle del cliente en modal
  */
 function displayClientDetail(client) {
-    document.getElementById('modalClientName').textContent = client.nombre;
+    document.getElementById('modalClientName').textContent = client.name;
     
     const interactions = client.interactions || [];
     const interactionsHTML = interactions.length > 0 
@@ -455,8 +519,6 @@ function displayClientDetail(client) {
 function editSelectedClient() {
     if (!selectedClientId) return;
     
-    hideModal();
-    
     getDoc(doc(db, 'clients', selectedClientId)).then(docSnap => {
         if (docSnap.exists()) {
             const client = docSnap.data();
@@ -464,7 +526,7 @@ function editSelectedClient() {
             
             // Llenar formulario
             document.getElementById('cedula').value = client.cedula;
-            document.getElementById('nombre').value = client.nombre;
+            document.getElementById('nombre').value = client.name;
             document.getElementById('email').value = client.email || '';
             document.getElementById('fechaNacimiento').value = client.fechaNacimiento || '';
             document.getElementById('domicilio').value = client.domicilio || '';
@@ -479,6 +541,7 @@ function editSelectedClient() {
             
             document.getElementById('formTitle').textContent = 'Editar Cliente';
             formSection.classList.remove('hidden');
+            hideModal();
             window.scrollTo({ top: formSection.offsetTop - 20, behavior: 'smooth' });
         }
     });
@@ -535,6 +598,21 @@ async function handleInteractionSubmit(e) {
                 updatedAt: Timestamp.now()
             });
             
+            // ✅ NUEVO: Si la interacción es exitosa, registrar como venta
+            if (interaction.result.toLowerCase() === 'exitoso') {
+                try {
+                    const recordSuccessfulSale = httpsCallable(functions, 'recordSuccessfulSale');
+                    await recordSuccessfulSale({
+                        clientId: selectedClientId,
+                        segmento: client.segmento
+                    });
+                    console.log('✅ Venta registrada en métricas');
+                } catch (saleError) {
+                    console.error('⚠️ Error registrando venta:', saleError);
+                    // No bloquear - la interacción ya se guardó
+                }
+            }
+            
             showMessage('✅ Interacción registrada exitosamente', 'success');
             interactionForm.reset();
             viewClientDetail(selectedClientId); // Recargar detalle
@@ -550,21 +628,28 @@ async function handleInteractionSubmit(e) {
  */
 function searchClients() {
     const searchTerm = searchInput.value.toLowerCase().trim();
-    
-    if (!searchTerm) {
-        displayClients(allClients);
-        return;
+    const estadoPlan = filterEstadoPlan ? filterEstadoPlan.value : '';
+
+    let filtered = allClients;
+    if (searchTerm) {
+        filtered = filtered.filter(client => {
+            const safeClient = window.safeClientDisplay ? window.safeClientDisplay(client) : client;
+            return (
+                safeClient.name.toLowerCase().includes(searchTerm) ||
+                safeClient.cedula.includes(searchTerm) ||
+                (client.serviciosMoviles && client.serviciosMoviles.some(num => num && num.includes(searchTerm))) ||
+                (client.serviciosFijos && client.serviciosFijos.some(num => num && num.includes(searchTerm)))
+            );
+        });
     }
-    
-    const filtered = allClients.filter(client => 
-        client.nombre.toLowerCase().includes(searchTerm) ||
-        client.cedula.includes(searchTerm) ||
-        client.serviciosMoviles.some(num => num.includes(searchTerm)) ||
-        client.serviciosFijos.some(num => num.includes(searchTerm))
-    );
-    
+    if (estadoPlan) {
+        filtered = filtered.filter(client => client.estadoPlan && client.estadoPlan.toUpperCase() === estadoPlan);
+    }
     displayClients(filtered);
     showMessage(`🔍 ${filtered.length} cliente(s) encontrado(s)`, 'info');
+if (filterEstadoPlan) {
+    filterEstadoPlan.addEventListener('change', searchClients);
+}
 }
 
 /**

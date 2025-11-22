@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migración de Clientes</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75' font-weight='bold' fill='%234F46E5'>⬥</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+        .status {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        .status.info {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        .status.success {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+        .status.error {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Migración de Clientes</h1>
+        <p style="color: #666; margin-bottom: 20px;">
+            Este proceso actualizará todos los clientes existentes para usar el nuevo formato.
+        </p>
+        <div id="status"></div>
+        <button id="btnMigrate" onclick="ejecutarMigracion()">Iniciar Migración</button>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js"></script>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
+
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCLowKGJBPHmP0hSs3c6AzKPKn45sRALmE",
+            authDomain: "executiveperformancek.firebaseapp.com",
+            projectId: "executiveperformancek",
+            storageBucket: "executiveperformancek.appspot.com",
+            messagingSenderId: "1038507852800",
+            appId: "1:1038507852800:web:27e10c6e0a2c1cd52fa57c"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const functions = getFunctions(app, 'us-central1');
+
+        window.ejecutarMigracion = async function() {
+            const statusEl = document.getElementById('status');
+            const btnMigrate = document.getElementById('btnMigrate');
+
+            onAuthStateChanged(auth, async (user) => {
+                if (!user) {
+                    statusEl.className = 'status error';
+                    statusEl.textContent = '❌ Debes iniciar sesión como admin';
+                    return;
+                }
+
+                try {
+                    btnMigrate.disabled = true;
+                    statusEl.className = 'status info';
+                    statusEl.innerHTML = '<span class="loading"></span>Ejecutando migración...';
+
+                    const migrateClientNames = httpsCallable(functions, 'migrateClientNames');
+                    const result = await migrateClientNames({});
+
+                    statusEl.className = 'status success';
+                    statusEl.innerHTML = `✅ ${result.data.message}<br>Clientes actualizados: <strong>${result.data.updated}</strong>`;
+                    btnMigrate.textContent = '✅ Migración completada';
+                    
+                    setTimeout(() => {
+                        window.location.href = '/index.html';
+                    }, 2000);
+
+                } catch (error) {
+                    statusEl.className = 'status error';
+                    statusEl.textContent = `❌ Error: ${error.message}`;
+                    btnMigrate.disabled = false;
+                    console.error('Error:', error);
+                }
+            });
+        };
+    </script>
+</body>
+</html>

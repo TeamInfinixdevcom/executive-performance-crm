@@ -1,7 +1,30 @@
 /**
  * Sistema de Tracking de Ventas/Planes
  * Registra cada venta nueva o actualización de plan
+ * ✅ Con validaciones seguras para prevenir errores de datos
  */
+
+// Función auxiliar para formatear fechas de forma segura
+function formatSafeDate(timestamp) {
+    if (!timestamp) return 'Sin fecha';
+    
+    try {
+        let date;
+        if (timestamp && typeof timestamp.toDate === 'function') {
+            date = timestamp.toDate();
+        } else {
+            date = new Date(timestamp);
+        }
+        
+        if (isNaN(date.getTime())) {
+            return 'Fecha inválida';
+        }
+        
+        return date.toLocaleDateString('es-CR');
+    } catch (error) {
+        return 'Fecha inválida';
+    }
+}
 
 import { auth, db } from './firebase-config.js';
 import { 
@@ -32,14 +55,17 @@ window.registerNewClientSale = async function(clientData, clientId) {
     try {
         const ventasRef = collection(db, 'ventas');
         
+        // ✅ Usar validación segura para los datos de venta
+        const safeClient = window.safeClientDisplay ? window.safeClientDisplay(clientData) : clientData;
+        
         await addDoc(ventasRef, {
             clientId: clientId,
-            clientName: clientData.nombre,
+            clientName: safeClient.name,
             executiveId: currentUser.uid,
             executiveName: currentUser.displayName || currentUser.email,
-            segmento: clientData.segmento,
-            tipoPlan: clientData.tipoPlan,
-            estadoPlan: clientData.estadoPlan,
+            segmento: safeClient.segmento,
+            tipoPlan: safeClient.tipoPlan || 'SIN PLAN',
+            estadoPlan: safeClient.estado,
             tipoVenta: 'nuevo_cliente',  // nuevo_cliente, upgrade, downgrade, renovacion
             monto: clientData.monto || 0,
             fechaVenta: Timestamp.now(),
@@ -47,7 +73,7 @@ window.registerNewClientSale = async function(clientData, clientId) {
         });
 
         console.log('✅ Venta registrada:', {
-            cliente: clientData.nombre,
+            cliente: safeClient.name,
             segmento: clientData.segmento,
             plan: clientData.tipoPlan
         });
@@ -153,7 +179,20 @@ window.loadSalesMetas = async function() {
             let ventasEsteMes = 0;
             ventasSnapshot.forEach(doc => {
                 const venta = doc.data();
-                const ventaDate = venta.fechaVenta?.toDate ? venta.fechaVenta.toDate() : new Date(venta.fechaVenta);
+                
+                // ✅ Validación segura de fechas
+                let ventaDate;
+                try {
+                    ventaDate = venta.fechaVenta?.toDate ? venta.fechaVenta.toDate() : new Date(venta.fechaVenta);
+                    
+                    // Verificar si la fecha es válida
+                    if (isNaN(ventaDate.getTime())) {
+                        ventaDate = new Date(); // Usar fecha actual como fallback
+                    }
+                } catch (error) {
+                    console.warn('Fecha de venta inválida:', venta.fechaVenta);
+                    ventaDate = new Date(); // Fallback a fecha actual
+                }
                 
                 if (ventaDate.getMonth() === currentMonth && ventaDate.getFullYear() === currentYear) {
                     ventasEsteMes++;
@@ -258,7 +297,19 @@ window.loadSalesReport = async function() {
 
         const ventas = [];
         ventasSnapshot.forEach(doc => {
-            ventas.push(doc.data());
+            const venta = doc.data();
+            
+            // ✅ Validación segura de datos de venta
+            const safeVenta = {
+                clientName: venta.clientName || 'CLIENTE SIN NOMBRE',
+                segmento: venta.segmento || 'SIN SEGMENTO',
+                tipoPlan: venta.tipoPlan || 'SIN PLAN',
+                tipoVenta: venta.tipoVenta || 'no_especificado',
+                monto: venta.monto || 0,
+                fechaVenta: venta.fechaVenta
+            };
+            
+            ventas.push(safeVenta);
         });
 
         const table = document.createElement('table');
@@ -286,7 +337,7 @@ window.loadSalesReport = async function() {
                                   v.tipoVenta === 'downgrade' ? '⬇️ Downgrade' : '🔄 Renovación'}
                             </span>
                         </td>
-                        <td>${new Date(v.fechaVenta?.toDate ? v.fechaVenta.toDate() : v.fechaVenta).toLocaleDateString('es-CR')}</td>
+                        <td>${window.safeFormatDate ? window.safeFormatDate(v.fechaVenta) : formatSafeDate(v.fechaVenta)}</td>
                     </tr>
                 `).join('')}
             </tbody>

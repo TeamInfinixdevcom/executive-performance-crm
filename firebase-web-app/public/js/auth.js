@@ -5,6 +5,8 @@
  */
 
 import { auth, db } from './firebase-config.js';
+import deviceFingerprint from './device-fingerprint.js';
+import csrfTokenManager from './csrf-protection.js';
 import { 
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
@@ -128,7 +130,7 @@ if (document.getElementById('registerForm')) {
 }
 
 /**
- * Login de usuario
+ * Login de usuario - CON PROTECCIONES DE SEGURIDAD
  */
 if (document.getElementById('loginForm')) {
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -140,11 +142,26 @@ if (document.getElementById('loginForm')) {
         try {
             showMessage('Iniciando sesión...', 'info');
             
+            // 🔒 PASO 1: Generar Device Fingerprint (primera vez) o validar (login previos)
+            const fingerprintValidation = await deviceFingerprint.validate();
+            
+            if (!fingerprintValidation.valid && deviceFingerprint.getStored() !== null) {
+                // El fingerprint no coincide y YA HABÍA UN ALMACENADO - posible hijacking
+                console.error('⚠️ SECURITY ALERT:', fingerprintValidation.reason);
+                showMessage('❌ ALERTA DE SEGURIDAD: El dispositivo no coincide con el login anterior. Por favor, intenta de nuevo.', 'error');
+                await signOut(auth);
+                deviceFingerprint.clear();
+                return;
+            }
+            
+            // 🔒 PASO 2: Generar CSRF Token (se enviará con la solicitud)
+            const csrfToken = csrfTokenManager.getToken();
+            
             // Primero hacer login en Firebase Auth
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
             
-            // Después verificar en Firestore si está autorizado
+            // 🔒 PASO 3: Después verificar en Firestore si está autorizado
             const userDoc = await getDoc(doc(db, 'users', user.uid));
             
             if (!userDoc.exists()) {
@@ -161,6 +178,21 @@ if (document.getElementById('loginForm')) {
                 return;
             }
             
+            // 🔒 PASO 4: Guardar device fingerprint en localStorage (para futuras validaciones)
+            const newFingerprint = await deviceFingerprint.generate();
+            deviceFingerprint.save(newFingerprint);
+            
+            // 🔒 PASO 5: Guardar CSRF token en sessionStorage también (para protección adicional)
+            sessionStorage.setItem('csrfToken', csrfToken);
+            
+            // 🔒 PASO 6: Registrar el login en Firestore para auditoría
+            await setDoc(doc(db, 'users', user.uid), {
+                ...userData,
+                lastLogin: new Date().toISOString(),
+                lastLoginDevice: newFingerprint.slice(0, 20) + '...'
+            });
+            
+            console.log('✅ Login exitoso - Dispositivo fingerprinted y protecciones activadas');
             showMessage('¡Bienvenido! Redirigiendo...', 'success');
             
             setTimeout(() => {
@@ -251,12 +283,22 @@ if (window.location.pathname.includes('index.html') || window.location.pathname 
             if (logoutBtn) {
                 logoutBtn.addEventListener('click', async () => {
                     try {
+                        // 🔒 Limpiar fingerprint y CSRF tokens al logout
+                        deviceFingerprint.clear();
+                        csrfTokenManager.clear();
+                        sessionStorage.removeItem('csrfToken');
+                        
                         await signOut(auth);
                         window.location.href = 'login.html';
                     } catch (error) {
                         console.error('Error al cerrar sesión:', error);
                     }
                 });
+            }
+            
+            // Inicializar módulo de gestión de llamadas
+            if (typeof initCallsManagement === 'function') {
+                initCallsManagement(user.uid);
             }
         }
     });

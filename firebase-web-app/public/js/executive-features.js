@@ -40,6 +40,12 @@ async function loadPipeline() {
     if (!currentUser) return;
 
     try {
+        const container = document.getElementById('pipelineContainer');
+        if (!container) {
+            console.log('Pipeline container no encontrado (pestaña desactivada)');
+            return;
+        }
+
         const clientsRef = collection(db, 'clients');
         const q = query(clientsRef, where('executiveId', '==', currentUser.uid));
         const snapshot = await getDocs(q);
@@ -62,7 +68,6 @@ async function loadPipeline() {
             }
         });
 
-        const container = document.getElementById('pipelineContainer');
         container.innerHTML = '';
         container.className = 'pipeline-columns';
 
@@ -77,7 +82,7 @@ async function loadPipeline() {
                 <div class="pipeline-cards">
                     ${clients.map(c => `
                         <div class="pipeline-card" data-id="${c.id}">
-                            <strong>${c.nombre}</strong>
+                            <strong>${c.name}</strong>
                             <small>${getSegmentoBadge(c.segmento)} ${c.segmento}</small>
                             <p>💰 ${c.tipoPlan || 'N/A'}</p>
                         </div>
@@ -110,7 +115,7 @@ async function loadContactReports() {
             if (client.interactions && Array.isArray(client.interactions)) {
                 client.interactions.forEach(interaction => {
                     allInteractions.push({
-                        clientName: client.nombre,
+                        clientName: client.name,
                         clientId: doc.id,
                         ...interaction
                     });
@@ -126,6 +131,10 @@ async function loadContactReports() {
         });
 
         const container = document.getElementById('contactsReportContainer');
+        if (!container) {
+            console.log('Contenedor de contactos no encontrado (pestaña desactivada)');
+            return;
+        }
         container.innerHTML = '';
 
         if (allInteractions.length === 0) {
@@ -177,20 +186,18 @@ window.applyContactFilters = async function() {
 
         let allInteractions = [];
 
-        snapshot.forEach(doc => {
-            const client = doc.data();
-            if (client.interactions && Array.isArray(client.interactions)) {
-                client.interactions.forEach(interaction => {
-                    allInteractions.push({
-                        clientName: client.nombre,
-                        clientId: doc.id,
-                        ...interaction
-                    });
+    snapshot.forEach(doc => {
+        const client = doc.data();
+        if (client.interactions && Array.isArray(client.interactions)) {
+            client.interactions.forEach(interaction => {
+                allInteractions.push({
+                    clientName: client.name,
+                    clientId: doc.id,
+                    ...interaction
                 });
-            }
-        });
-
-        // Aplicar filtros
+            });
+        }
+    });        // Aplicar filtros
         if (typeFilter) {
             allInteractions = allInteractions.filter(i => i.type === typeFilter);
         }
@@ -343,7 +350,8 @@ async function loadActivities() {
 
     try {
         const clientsRef = collection(db, 'clients');
-        const q = query(clientsRef, where('executiveId', '==', currentUser.uid), orderBy('updatedAt', 'desc'));
+        // Solo hacer where, ordenar en el cliente para evitar índices compuestos
+        const q = query(clientsRef, where('executiveId', '==', currentUser.uid));
         const snapshot = await getDocs(q);
 
         const activities = [];
@@ -355,9 +363,9 @@ async function loadActivities() {
             if (client.createdAt) {
                 activities.push({
                     type: 'created',
-                    clientName: client.nombre,
+                    clientName: client.name,
                     date: client.createdAt,
-                    description: `Cliente creado: ${client.nombre}`
+                    description: `Cliente creado: ${client.name}`
                 });
             }
 
@@ -365,9 +373,9 @@ async function loadActivities() {
             if (client.updatedAt && client.updatedAt !== client.createdAt) {
                 activities.push({
                     type: 'edited',
-                    clientName: client.nombre,
+                    clientName: client.name,
                     date: client.updatedAt,
-                    description: `Cliente editado: ${client.nombre}`
+                    description: `Cliente editado: ${client.name}`
                 });
             }
 
@@ -376,22 +384,26 @@ async function loadActivities() {
                 client.interactions.forEach(interaction => {
                     activities.push({
                         type: 'contacted',
-                        clientName: client.nombre,
+                        clientName: client.name,
                         date: new Date(interaction.date),
-                        description: `Contacto (${interaction.type}): ${client.nombre}`
+                        description: `Contacto (${interaction.type}): ${client.name}`
                     });
                 });
             }
         });
 
-        // Ordenar por fecha descendente
+        // Ordenar por fecha descendente (en el cliente)
         activities.sort((a, b) => {
-            const dateA = new Date(a.date);
-            const dateB = new Date(b.date);
+            const dateA = a.date.toMillis ? a.date.toMillis() : new Date(a.date).getTime();
+            const dateB = b.date.toMillis ? b.date.toMillis() : new Date(b.date).getTime();
             return dateB - dateA;
         });
 
         const container = document.getElementById('activitiesContainer');
+        if (!container) {
+            console.log('Contenedor de actividades no encontrado (pestaña desactivada)');
+            return;
+        }
         container.innerHTML = '';
 
         if (activities.length === 0) {
@@ -426,21 +438,22 @@ window.applyActivityFilters = async function() {
 
     try {
         const clientsRef = collection(db, 'clients');
-        const q = query(clientsRef, where('executiveId', '==', currentUser.uid), orderBy('updatedAt', 'desc'));
+        // Solo hacer where, ordenar en el cliente para evitar índices compuestos
+        const q = query(clientsRef, where('executiveId', '==', currentUser.uid));
         const snapshot = await getDocs(q);
 
         const activities = [];
 
         snapshot.forEach(doc => {
             const client = doc.data();
-            
+            const displayName = client.name || client.nombre || '(Sin nombre)';
             // Actividad: Cliente creado
             if (client.createdAt) {
                 activities.push({
                     type: 'created',
-                    clientName: client.nombre,
+                    clientName: displayName,
                     date: client.createdAt,
-                    description: `Cliente creado: ${client.nombre}`
+                    description: `Cliente creado: ${displayName}`
                 });
             }
 
@@ -448,9 +461,9 @@ window.applyActivityFilters = async function() {
             if (client.updatedAt && client.updatedAt !== client.createdAt) {
                 activities.push({
                     type: 'edited',
-                    clientName: client.nombre,
+                    clientName: displayName,
                     date: client.updatedAt,
-                    description: `Cliente editado: ${client.nombre}`
+                    description: `Cliente editado: ${displayName}`
                 });
             }
 
@@ -459,9 +472,9 @@ window.applyActivityFilters = async function() {
                 client.interactions.forEach(interaction => {
                     activities.push({
                         type: 'contacted',
-                        clientName: client.nombre,
+                        clientName: displayName,
                         date: new Date(interaction.date),
-                        description: `Contacto (${interaction.type}): ${client.nombre}`
+                        description: `Contacto (${interaction.type}): ${displayName}`
                     });
                 });
             }
@@ -473,10 +486,10 @@ window.applyActivityFilters = async function() {
             filtered = activities.filter(a => a.type === typeFilter);
         }
 
-        // Ordenar por fecha descendente
+        // Ordenar por fecha descendente (en el cliente)
         filtered.sort((a, b) => {
-            const dateA = new Date(a.date);
-            const dateB = new Date(b.date);
+            const dateA = a.date.toMillis ? a.date.toMillis() : new Date(a.date).getTime();
+            const dateB = b.date.toMillis ? b.date.toMillis() : new Date(b.date).getTime();
             return dateB - dateA;
         });
 
@@ -533,8 +546,8 @@ async function checkAlerts() {
                 if (daysSinceContact > 30) {
                     alerts.push({
                         type: 'sin-contacto',
-                        client: client.nombre,
-                        message: `${client.nombre} sin contacto hace ${daysSinceContact} días`,
+                        client: client.name,
+                        message: `${client.name} sin contacto hace ${daysSinceContact} días`,
                         severity: daysSinceContact > 60 ? 'high' : 'medium'
                     });
                 }
@@ -554,8 +567,8 @@ async function checkAlerts() {
                 if (daysUntilBirthday <= 7 && daysUntilBirthday >= 0) {
                     alerts.push({
                         type: 'cumpleanos',
-                        client: client.nombre,
-                        message: `🎂 ${client.nombre} cumple en ${daysUntilBirthday} días`,
+                        client: client.name,
+                        message: `🎂 ${client.name} cumple en ${daysUntilBirthday} días`,
                         severity: 'info'
                     });
                 }
@@ -629,15 +642,30 @@ auth.onAuthStateChanged(async (user) => {
         currentUser = user;
         
         // Cargar todas las funcionalidades cuando se muestra la pestaña
+        // Pero SOLO si esos elementos existen
         const observer = new MutationObserver(() => {
             const activeTab = document.querySelector('.tab-content.active');
-            if (activeTab && activeTab.id === 'tab-metas') loadMetas();
-            if (activeTab && activeTab.id === 'tab-pipeline') loadPipeline();
-            if (activeTab && activeTab.id === 'tab-contactos') loadContactReports();
-            if (activeTab && activeTab.id === 'tab-actividades') loadActivities();
+            if (!activeTab) return;
+            
+            if (activeTab.id === 'tab-metas' && document.getElementById('metasContainer')) {
+                loadMetas();
+            }
+            if (activeTab.id === 'tab-pipeline' && document.getElementById('pipelineContainer')) {
+                loadPipeline();
+            }
+            if (activeTab.id === 'tab-contactos' && document.getElementById('contactsReportContainer')) {
+                loadContactReports();
+            }
+            if (activeTab.id === 'tab-actividades' && document.getElementById('activitiesContainer')) {
+                loadActivities();
+            }
         });
 
-        observer.observe(document, { attributes: true, subtree: true });
+        // Observar SOLO cambios de clase en los tabs, no atributos de todo el DOM
+        const tabsContainer = document.querySelector('.tabs-container');
+        if (tabsContainer) {
+            observer.observe(tabsContainer, { attributes: true, attributeFilter: ['class'], subtree: true });
+        }
 
         // Configurar eventos
         setupCampaigns();

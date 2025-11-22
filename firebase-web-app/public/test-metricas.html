@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Métricas - Executive Performance</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        .info { background: #d1ecf1; border-color: #bee5eb; }
+        .metrics-display { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 10px 0; }
+        .metric-card { padding: 10px; background: #f8f9fa; border-radius: 5px; text-align: center; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test de Métricas - Executive Performance</h1>
+    
+    <div class="test-section info">
+        <h2>📊 Estado del Sistema</h2>
+        <div id="systemStatus">Inicializando...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🔥 Firebase</h2>
+        <button onclick="testFirebase()">Probar Conexión Firebase</button>
+        <div id="firebaseStatus">No probado</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>👤 Autenticación</h2>
+        <input type="email" id="testEmail" placeholder="Email" value="cnajera@ice.go.cr">
+        <input type="password" id="testPassword" placeholder="Password" value="123456">
+        <button onclick="testLogin()">Iniciar Sesión</button>
+        <button onclick="testLogout()">Cerrar Sesión</button>
+        <div id="authStatus">No autenticado</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📈 Métricas Directas</h2>
+        <button onclick="loadTestMetrics()">Cargar Métricas</button>
+        <div id="metricsStatus">No cargadas</div>
+        <div class="metrics-display" id="metricsDisplay">
+            <!-- Las métricas aparecerán aquí -->
+        </div>
+    </div>
+
+    <!-- Firebase Config -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
+        import { getFirestore, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD6aUV7W2wxHvDNZGW5QqfBN8MLEpcCgRM",
+            authDomain: "executiveperformancek.firebaseapp.com",
+            projectId: "executiveperformancek",
+            storageBucket: "executiveperformancek.firebasestorage.app",
+            messagingSenderId: "307180961031",
+            appId: "1:307180961031:web:bafba95f56d745810fdfe3"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Hacer variables globales
+        window.firebase = { app, auth, db };
+        window.auth = auth;
+        window.db = db;
+
+        // Test Firebase
+        window.testFirebase = () => {
+            const status = document.getElementById('firebaseStatus');
+            if (window.firebase && window.auth && window.db) {
+                status.innerHTML = '<span style="color: green;">✅ Firebase inicializado correctamente</span>';
+                status.parentElement.className = 'test-section success';
+            } else {
+                status.innerHTML = '<span style="color: red;">❌ Error en inicialización</span>';
+                status.parentElement.className = 'test-section error';
+            }
+        };
+
+        // Test Login
+        window.testLogin = async () => {
+            const email = document.getElementById('testEmail').value;
+            const password = document.getElementById('testPassword').value;
+            const status = document.getElementById('authStatus');
+            
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                status.innerHTML = `<span style="color: green;">✅ Sesión iniciada: ${user.email} (${user.uid})</span>`;
+                status.parentElement.className = 'test-section success';
+            } catch (error) {
+                status.innerHTML = `<span style="color: red;">❌ Error: ${error.message}</span>`;
+                status.parentElement.className = 'test-section error';
+            }
+        };
+
+        // Test Logout
+        window.testLogout = async () => {
+            try {
+                await signOut(auth);
+                document.getElementById('authStatus').innerHTML = 'Sesión cerrada';
+                document.getElementById('authStatus').parentElement.className = 'test-section';
+            } catch (error) {
+                console.error('Error cerrando sesión:', error);
+            }
+        };
+
+        // Test Métricas
+        window.loadTestMetrics = async () => {
+            const status = document.getElementById('metricsStatus');
+            const display = document.getElementById('metricsDisplay');
+            
+            try {
+                const user = auth.currentUser;
+                if (!user) {
+                    throw new Error('Usuario no autenticado');
+                }
+
+                status.innerHTML = '🔄 Cargando métricas...';
+                
+                // Obtener clientes del usuario actual
+                const clientsQuery = query(collection(db, 'clients'), where('executiveId', '==', user.uid));
+                const clientsSnapshot = await getDocs(clientsQuery);
+                
+                const metrics = {
+                    total: 0,
+                    platino: 0,
+                    oro: 0,
+                    plata: 0,
+                    bronce: 0,
+                    black: 0
+                };
+
+                clientsSnapshot.forEach(doc => {
+                    const client = doc.data();
+                    const segmento = (client.segmento || '').toUpperCase();
+                    
+                    metrics.total++;
+                    
+                    switch(segmento) {
+                        case 'PLATINO': metrics.platino++; break;
+                        case 'ORO': metrics.oro++; break;
+                        case 'PLATA': metrics.plata++; break;
+                        case 'BRONCE': metrics.bronce++; break;
+                        case 'BLACK': metrics.black++; break;
+                    }
+                });
+
+                status.innerHTML = `<span style="color: green;">✅ Métricas cargadas: ${metrics.total} clientes</span>`;
+                status.parentElement.className = 'test-section success';
+                
+                // Mostrar métricas
+                display.innerHTML = `
+                    <div class="metric-card"><strong>Total</strong><br>${metrics.total}</div>
+                    <div class="metric-card"><strong>PLATINO</strong><br>${metrics.platino}</div>
+                    <div class="metric-card"><strong>ORO</strong><br>${metrics.oro}</div>
+                    <div class="metric-card"><strong>PLATA</strong><br>${metrics.plata}</div>
+                    <div class="metric-card"><strong>BRONCE</strong><br>${metrics.bronce}</div>
+                    <div class="metric-card"><strong>BLACK</strong><br>${metrics.black}</div>
+                `;
+                
+            } catch (error) {
+                status.innerHTML = `<span style="color: red;">❌ Error: ${error.message}</span>`;
+                status.parentElement.className = 'test-section error';
+                console.error('Error cargando métricas:', error);
+            }
+        };
+
+        // Monitor estado auth
+        onAuthStateChanged(auth, (user) => {
+            const systemStatus = document.getElementById('systemStatus');
+            if (user) {
+                systemStatus.innerHTML = `🟢 Sistema listo - Usuario: ${user.email} (${user.uid})`;
+                systemStatus.parentElement.className = 'test-section success';
+            } else {
+                systemStatus.innerHTML = '🔴 Usuario no autenticado';
+                systemStatus.parentElement.className = 'test-section error';
+            }
+        });
+
+        // Auto-test inicial
+        setTimeout(() => {
+            testFirebase();
+        }, 1000);
+    </script>
+</body>
+</html>

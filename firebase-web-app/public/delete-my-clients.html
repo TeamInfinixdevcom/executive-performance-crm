@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eliminar Mis Clientes</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75' font-weight='bold' fill='%234F46E5'>⬥</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 {
+            color: #d32f2f;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: left;
+            color: #856404;
+        }
+        .warning p {
+            margin: 10px 0;
+            font-weight: 500;
+        }
+        .warning ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+        .warning li {
+            margin: 5px 0;
+        }
+        .status {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+            font-weight: 500;
+            display: none;
+        }
+        .status.info {
+            background: #e3f2fd;
+            color: #1976d2;
+            display: block;
+        }
+        .status.success {
+            background: #e8f5e9;
+            color: #388e3c;
+            display: block;
+        }
+        .status.error {
+            background: #ffebee;
+            color: #d32f2f;
+            display: block;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        button {
+            flex: 1;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+        #btnDelete {
+            background: #d32f2f;
+            color: white;
+        }
+        #btnDelete:hover:not(:disabled) {
+            background: #b71c1c;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(211, 47, 47, 0.4);
+        }
+        #btnCancel {
+            background: #757575;
+            color: white;
+        }
+        #btnCancel:hover:not(:disabled) {
+            background: #616161;
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #d32f2f;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .info-box {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: left;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗑️ Eliminar Mis Clientes</h1>
+        
+        <div class="warning">
+            <p>⚠️ ADVERTENCIA - OPERACIÓN IRREVERSIBLE</p>
+            <ul>
+                <li>✅ Se eliminarán SOLO tus clientes</li>
+                <li>✅ Los clientes de Cristian NO serán afectados</li>
+                <li>❌ Esta acción NO se puede deshacer</li>
+                <li>❌ Se perderán TODOS los datos asociados</li>
+            </ul>
+        </div>
+
+        <div class="info-box">
+            <strong>ℹ️ Información:</strong> Se eliminarán todos los clientes que pertenecen a tu cuenta de ejecutivo. Los clientes de otros ejecutivos permanecerán intactos.
+        </div>
+
+        <div id="status"></div>
+
+        <div class="button-group">
+            <button id="btnDelete" onclick="confirmarEliminacion()">🗑️ Eliminar Mis Clientes</button>
+            <button id="btnCancel" onclick="window.location.href='/index.html'">← Cancelar</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js"></script>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCLowKGJBPHmP0hSs3c6AzKPKn45sRALmE",
+            authDomain: "executiveperformancek.firebaseapp.com",
+            projectId: "executiveperformancek",
+            storageBucket: "executiveperformancek.appspot.com",
+            messagingSenderId: "1038507852800",
+            appId: "1:1038507852800:web:27e10c6e0a2c1cd52fa57c"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const functions = getFunctions(app, 'us-central1');
+
+        window.confirmarEliminacion = async function() {
+            if (!confirm('⚠️ ¿ESTÁS COMPLETAMENTE SEGURO?\n\nEsta acción eliminará TODOS tus clientes y NO se puede deshacer.')) {
+                return;
+            }
+
+            if (!confirm('🔴 ÚLTIMA CONFIRMACIÓN\n\nEscribe "ELIMINAR" en la siguiente ventana para confirmar definitivamente.')) {
+                return;
+            }
+
+            const confirmText = prompt('Escribe "ELIMINAR" para confirmar:');
+            if (confirmText !== 'ELIMINAR') {
+                alert('❌ Confirmación incorrecta. Operación cancelada.');
+                return;
+            }
+
+            const statusEl = document.getElementById('status');
+            const btnDelete = document.getElementById('btnDelete');
+            const btnCancel = document.getElementById('btnCancel');
+
+            onAuthStateChanged(auth, async (user) => {
+                if (!user) {
+                    statusEl.className = 'status error';
+                    statusEl.textContent = '❌ Debes iniciar sesión';
+                    return;
+                }
+
+                try {
+                    btnDelete.disabled = true;
+                    btnCancel.disabled = true;
+                    statusEl.className = 'status info';
+                    statusEl.innerHTML = '<span class="loading"></span>Eliminando tus clientes...';
+
+                    const deleteMyClients = httpsCallable(functions, 'deleteMyClients');
+                    const result = await deleteMyClients({});
+
+                    statusEl.className = 'status success';
+                    statusEl.innerHTML = `✅ ${result.data.message}`;
+                    btnDelete.textContent = '✅ Hecho';
+                    
+                    setTimeout(() => {
+                        window.location.href = '/index.html';
+                    }, 2000);
+
+                } catch (error) {
+                    statusEl.className = 'status error';
+                    statusEl.textContent = `❌ Error: ${error.message}`;
+                    btnDelete.disabled = false;
+                    btnCancel.disabled = false;
+                    console.error('Error:', error);
+                }
+            });
+        };
+    </script>
+</body>
+</html>
